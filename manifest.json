@@ -1,0 +1,16 @@
+{
+    "manifest_version": 3,
+    "name": "FBVIB:Crear evento de Calendar desde texto",
+    "version": "1.0.0",
+    "description": "Pega un parte/acta y crea un evento en Google Calendar con título, fecha, hora y ubicación.",
+    "icons": {
+        "128": "icons/images.png"
+    },
+    "action": {
+        "default_title": "Crear evento",
+        "default_popup": "popup.html"
+    },
+    "permissions": [
+        "tabs"
+    ]
+}
