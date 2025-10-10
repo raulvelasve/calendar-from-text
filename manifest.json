@@ -1,6 +1,6 @@
 {
     "manifest_version": 3,
-    "name": "FBVIB:Crear evento de Calendar desde texto",
+    "name": "Arbitro Calendar FBVIB",
     "version": "1.0.0",
     "description": "Pega un parte/acta y crea un evento en Google Calendar con título, fecha, hora y ubicación.",
     "icons": {
