@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Crear evento desde texto</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <img src="icons/images.png" alt="logo" width="24" height="24" />
+
+    <header>
+        <h1>Evento desde texto</h1>
+        <p>Pega el bloque de texto y pulsa <strong>Analizar</strong>.</p>
+    </header>
+
+    <textarea id="raw" placeholder="Pega aquí el texto del partido..."></textarea>
+
+    <div class="buttons">
+        <button id="parse">Analizar</button>
+    </div>
+
+    <section id="preview" class="hidden">
+        <h2>Previsualización</h2>
+        <div class="grid">
+            <label>Título</label>
+            <input id="title" type="text" />
+
+            <label>Fecha (dd/mm/aaaa)</label>
+            <input id="date" type="text" />
+
+            <label>Hora inicio (hh:mm)</label>
+            <input id="time" type="text" />
+
+            <label>Duración (min)</label>
+            <input id="duration" type="number" min="15" step="15" value="120" />
+
+            <label>Ubicación</label>
+            <input id="location" type="text" />
+
+            <label>Detalles</label>
+            <textarea id="details"></textarea>
+        </div>
+        <div class="buttons">
+            <button id="create">Crear evento en Calendar</button>
+        </div>
+    </section>
+
+    <footer>
+        <small>Zona horaria: Europe/Madrid</small>
+    </footer>
+
+    <script src="sidepanel.js"></script>
+
+</body>
+
+</html>
