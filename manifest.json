@@ -7,8 +7,7 @@
         "128": "icons/images.png"
     },
     "action": {
-        "default_title": "Crear evento",
-        "default_popup": "sidepanel.html"
+        "default_title": "Crear evento"
     },
     "permissions": [
         "storage",

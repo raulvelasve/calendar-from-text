@@ -9,8 +9,31 @@
   const $location = el('location');
   const $details = el('details');
   const $preview = el('preview');
+  const $clear = el('clear'); // <-- nuevo
 
   const STATE_KEYS = ["raw","title","date","time","duration","location","details"];
+
+  // --- helper para mostrar/ocultar el botón borrar ---
+  function hasAnyContent() {
+    return (
+      ($raw.value || '').trim() ||
+      ($title.value || '').trim() ||
+      ($date.value || '').trim() ||
+      ($time.value || '').trim() ||
+      // duration cuenta como “contenido” si no está vacío
+      String($duration.value ?? '').trim() !== '' ||
+      ($location.value || '').trim() ||
+      ($details.value || '').trim()
+    );
+  }
+
+  function toggleClearButton() {
+    const has = !!hasAnyContent();
+    if ($clear) {
+      $clear.classList.toggle('hidden', !has);
+      $clear.disabled = !has;
+    }
+  }
 
   // -------- Persistencia --------
   function saveState() {
@@ -24,6 +47,7 @@
       details: $details.value || ""
     };
     chrome.storage.local.set({ eventFromText_state: data });
+    toggleClearButton(); // <-- actualizar visibilidad
   }
 
   function restoreState() {
@@ -37,10 +61,10 @@
       if (typeof s.location === "string") $location.value = s.location;
       if (typeof s.details === "string") $details.value = s.details;
 
-      // Si ya hay datos cargados, mostramos la previsualización
       if (s.title || s.date || s.time || s.location || s.details) {
         $preview.classList.remove('hidden');
       }
+      toggleClearButton(); // <-- actualizar visibilidad al restaurar
     });
   }
 
@@ -51,6 +75,43 @@
     window.addEventListener('beforeunload', saveState);
   }
 
+  // -------- Botón BORRAR --------
+  if ($clear) {
+    $clear.addEventListener('click', () => {
+      // limpiar campos
+      $raw.value = '';
+      $title.value = '';
+      $date.value = '';
+      $time.value = '';
+      $duration.value = 120; // valor por defecto
+      $location.value = '';
+      $details.value = '';
+
+      // borrar estado persistido
+      chrome.storage.local.remove('eventFromText_state', () => {
+        // ocultar previsualización y botón
+        $preview.classList.add('hidden');
+        toggleClearButton();
+      });
+    });
+  }
+
+  // -------- Tu lógica original --------
+  el('parse').addEventListener('click', () => {
+    const parsed = parseFixture($raw.value || '');
+    if (!parsed) {
+      alert('No se pudo reconocer fecha/hora y equipos. Revisa el texto.');
+      return;
+    }
+    $title.value = parsed.title || '';
+    $date.value = parsed.date || '';
+    $time.value = parsed.time || '';
+    $location.value = parsed.location || '';
+    $details.value = parsed.details || '';
+    $preview.classList.remove('hidden');
+    saveState();
+    toggleClearButton(); // <-- por si viene vacío el raw pero hay datos
+  });
   // -------- Tu lógica original (con pequeños retoques de template string) --------
   el('parse').addEventListener('click', () => {
     const parsed = parseFixture($raw.value || '');
