@@ -1,30 +1,31 @@
 (function () {
   const tz = 'Europe/Madrid';
   const el = (id) => document.getElementById(id);
+
   const $raw = el('raw');
-  const $title = el('title');
-  const $date = el('date');
-  const $time = el('time');
-  const $duration = el('duration');
-  const $location = el('location');
-  const $details = el('details');
-  const $preview = el('preview');
-  const $clear = el('clear'); // <-- nuevo
+  const $parse = el('parse');
+  const $clear = el('clear');
+  const $previews = el('previews');
+  const $cards = el('cards');
+  const $createAll = el('createAll');
 
-  const STATE_KEYS = ["raw","title","date","time","duration","location","details"];
+  // ---------- Persistencia simple (solo guardamos el bloque pegado) ----------
+  function saveState() {
+    chrome.storage.local.set({ eventFromText_raw: $raw.value || "" });
+    toggleClearButton();
+  }
 
-  // --- helper para mostrar/ocultar el botón borrar ---
+  function restoreState() {
+    chrome.storage.local.get(["eventFromText_raw"], (res) => {
+      if (typeof res.eventFromText_raw === "string") {
+        $raw.value = res.eventFromText_raw;
+      }
+      toggleClearButton();
+    });
+  }
+
   function hasAnyContent() {
-    return (
-      ($raw.value || '').trim() ||
-      ($title.value || '').trim() ||
-      ($date.value || '').trim() ||
-      ($time.value || '').trim() ||
-      // duration cuenta como “contenido” si no está vacío
-      String($duration.value ?? '').trim() !== '' ||
-      ($location.value || '').trim() ||
-      ($details.value || '').trim()
-    );
+    return ($raw.value || '').trim().length > 0 || ($cards?.children?.length || 0) > 0;
   }
 
   function toggleClearButton() {
@@ -35,137 +36,180 @@
     }
   }
 
-  // -------- Persistencia --------
-  function saveState() {
-    const data = {
-      raw: $raw.value || "",
-      title: $title.value || "",
-      date: $date.value || "",
-      time: $time.value || "",
-      duration: $duration.value || "",
-      location: $location.value || "",
-      details: $details.value || ""
-    };
-    chrome.storage.local.set({ eventFromText_state: data });
-    toggleClearButton(); // <-- actualizar visibilidad
-  }
+  // ---------- Crear una tarjeta ----------
+  function createCard(index, data) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'card';
 
-  function restoreState() {
-    chrome.storage.local.get(["eventFromText_state"], (res) => {
-      const s = res.eventFromText_state || {};
-      if (typeof s.raw === "string") $raw.value = s.raw;
-      if (typeof s.title === "string") $title.value = s.title;
-      if (typeof s.date === "string") $date.value = s.date;
-      if (typeof s.time === "string") $time.value = s.time;
-      if (typeof s.duration !== "undefined") $duration.value = s.duration;
-      if (typeof s.location === "string") $location.value = s.location;
-      if (typeof s.details === "string") $details.value = s.details;
+    wrapper.innerHTML = `
+      <div class="grid">
+        <label>Título</label>
+        <input class="title" type="text" value="${escapeHtml(data.title || '')}" />
 
-      if (s.title || s.date || s.time || s.location || s.details) {
-        $preview.classList.remove('hidden');
+        <label>Fecha (dd/mm/aaaa)</label>
+        <input class="date" type="text" value="${escapeHtml(data.date || '')}" />
+
+        <label>Hora inicio (hh:mm)</label>
+        <input class="time" type="text" value="${escapeHtml(data.time || '')}" />
+
+        <label>Duración (min)</label>
+        <input class="duration" type="number" min="15" step="15" value="${Number(data.duration || 120)}" />
+
+        <label>Ubicación</label>
+        <input class="location" type="text" value="${escapeHtml(data.location || '')}" />
+
+        <label>Detalles</label>
+        <textarea class="details">${escapeHtml(data.details || '')}</textarea>
+      </div>
+      <div class="buttons">
+        <button class="createOne">Crear evento en Calendar</button>
+      </div>
+    `;
+
+    // botón "Crear evento" de esta tarjeta
+    wrapper.querySelector('.createOne').addEventListener('click', () => {
+      const payload = readCard(wrapper);
+      if (!validate(payload)) {
+        alert('Revisa título, fecha (dd/mm/aaaa) y hora (hh:mm).');
+        return;
       }
-      toggleClearButton(); // <-- actualizar visibilidad al restaurar
+      openCalendarTab(payload);
     });
+
+    return wrapper;
   }
 
-  function autoWirePersistence() {
-    [$raw,$title,$date,$time,$duration,$location,$details].forEach($ =>
-      $.addEventListener('input', saveState)
-    );
-    window.addEventListener('beforeunload', saveState);
+  function readCard(card) {
+    const q = (sel) => card.querySelector(sel);
+    return {
+      title: (q('.title').value || '').trim(),
+      date: (q('.date').value || '').trim(),       // dd/mm/aaaa
+      time: (q('.time').value || '').trim(),       // hh:mm
+      duration: Math.max(15, parseInt(q('.duration').value || '120', 10)),
+      location: (q('.location').value || '').trim(),
+      details: (q('.details').value || '').trim(),
+    };
   }
 
-  // -------- Botón BORRAR --------
-  if ($clear) {
-    $clear.addEventListener('click', () => {
-      // limpiar campos
-      $raw.value = '';
-      $title.value = '';
-      $date.value = '';
-      $time.value = '';
-      $duration.value = 120; // valor por defecto
-      $location.value = '';
-      $details.value = '';
-
-      // borrar estado persistido
-      chrome.storage.local.remove('eventFromText_state', () => {
-        // ocultar previsualización y botón
-        $preview.classList.add('hidden');
-        toggleClearButton();
-      });
-    });
+  function validate({ title, date, time }) {
+    const okTitle = !!title;
+    const okDate = /^\d{2}\/\d{2}\/\d{4}$/.test(date);
+    const okTime = /^\d{1,2}:\d{2}$/.test(time);
+    return okTitle && okDate && okTime;
   }
 
-  // -------- Tu lógica original --------
-  el('parse').addEventListener('click', () => {
-    const parsed = parseFixture($raw.value || '');
-    if (!parsed) {
-      alert('No se pudo reconocer fecha/hora y equipos. Revisa el texto.');
-      return;
-    }
-    $title.value = parsed.title || '';
-    $date.value = parsed.date || '';
-    $time.value = parsed.time || '';
-    $location.value = parsed.location || '';
-    $details.value = parsed.details || '';
-    $preview.classList.remove('hidden');
-    saveState();
-    toggleClearButton(); // <-- por si viene vacío el raw pero hay datos
-  });
-  // -------- Tu lógica original (con pequeños retoques de template string) --------
-  el('parse').addEventListener('click', () => {
-    const parsed = parseFixture($raw.value || '');
-    if (!parsed) {
-      alert('No se pudo reconocer fecha/hora y equipos. Revisa el texto.');
-      return;
-    }
-    $title.value = parsed.title || '';
-    $date.value = parsed.date || '';
-    $time.value = parsed.time || '';
-    $location.value = parsed.location || '';
-    $details.value = parsed.details || '';
-    $preview.classList.remove('hidden');
-    saveState();
-  });
-
-  el('create').addEventListener('click', () => {
-    const title = $title.value.trim();
-    const date = $date.value.trim();   // dd/mm/aaaa
-    const time = $time.value.trim();   // hh:mm
-    const durationMin = Math.max(15, parseInt($duration.value || '120', 10));
-    const location = $location.value.trim();
-    const details = $details.value.trim();
-
-    if (!title || !/^\d{2}\/\d{2}\/\d{4}$/.test(date) || !/^\d{1,2}:\d{2}$/.test(time)) {
-      alert('Revisa título, fecha (dd/mm/aaaa) y hora (hh:mm).');
-      return;
-    }
-
+  // ---------- Abrir Google Calendar ----------
+  function openCalendarTab({ title, date, time, duration, location, details }) {
     const [d, m, y] = date.split('/').map(Number);
     const [hh, mm] = time.split(':').map(Number);
-    const start = new Date(y, m - 1, d, hh, mm, 0); // hora local
-    const end = new Date(start.getTime() + durationMin * 60 * 1000);
+    const start = new Date(y, m - 1, d, hh, mm, 0); // local
+    const end = new Date(start.getTime() + duration * 60 * 1000);
 
     const pad = (n, l = 2) => String(n).padStart(l, '0');
-    const fmt = (dt) => `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}T${pad(dt.getHours())}${pad(dt.getMinutes())}${pad(dt.getSeconds())}`;
+    const fmt = (dt) =>
+      `${dt.getFullYear()}${pad(dt.getMonth() + 1)}${pad(dt.getDate())}` +
+      `T${pad(dt.getHours())}${pad(dt.getMinutes())}${pad(dt.getSeconds())}`;
     const datesParam = `${fmt(start)}/${fmt(end)}`;
 
     const url =
       `https://calendar.google.com/calendar/render?action=TEMPLATE` +
       `&text=${encodeURIComponent(title)}` +
       `&dates=${datesParam}` +
-      `&location=${encodeURIComponent(location)}` +
+      `&location=${encodeURIComponent(location || '')}` +
       (details ? `&details=${encodeURIComponent(details)}` : '') +
       `&ctz=${encodeURIComponent(tz)}`;
 
-    if (chrome?.tabs?.create) {
-      chrome.tabs.create({ url });
-    } else {
-      window.open(url, '_blank');
+    if (chrome?.tabs?.create) chrome.tabs.create({ url });
+    else window.open(url, '_blank');
+  }
+
+  // ---------- Botones superiores ----------
+  $parse.addEventListener('click', () => {
+    const raw = ($raw.value || '').trim();
+    if (!raw) {
+      alert('Pega el texto de uno o varios partidos.');
+      return;
     }
+
+    const blocks = splitIntoBlocks(raw);          // NUEVO: divide en partidos
+    const parsedList = blocks
+      .map(b => parseFixture(b))
+      .filter(Boolean);
+
+    if (!parsedList.length) {
+      alert('No se reconoció ningún partido. Revisa el formato.');
+      return;
+    }
+
+    // limpia tarjetas anteriores y pinta nuevas
+    $cards.innerHTML = '';
+    parsedList.forEach((p, idx) => {
+      const card = createCard(idx, { ...p, duration: 120 });
+      $cards.appendChild(card);
+    });
+
+    $previews.classList.remove('hidden');
+    saveState();
   });
 
-  // --------- (el parseador igual que el tuyo, corrigiendo template strings) ---------
+  if ($clear) {
+    $clear.addEventListener('click', () => {
+      $raw.value = '';
+      $cards.innerHTML = '';
+      $previews.classList.add('hidden');
+      chrome.storage.local.remove('eventFromText_raw', () => toggleClearButton());
+    });
+  }
+
+  if ($createAll) {
+    $createAll.addEventListener('click', () => {
+      const cards = Array.from($cards.querySelectorAll('.card'));
+      if (!cards.length) return;
+
+      const payloads = cards.map(readCard);
+      const invalid = payloads.findIndex(p => !validate(p));
+      if (invalid !== -1) {
+        alert(`Revisa la tarjeta ${invalid + 1}: título, fecha (dd/mm/aaaa) y hora (hh:mm).`);
+        return;
+      }
+      payloads.forEach(openCalendarTab);
+    });
+  }
+
+  // ---------- Splitting en varios partidos ----------
+  function splitIntoBlocks(raw) {
+    // normaliza saltos
+    const text = raw.replace(/\r/g, '\n').trim();
+
+    // estrategia principal: cada bloque comienza con una línea de cabecera tipo
+    // "AUTONÓMICA", "INSULAR …", etc. Capturamos desde ese inicio hasta el siguiente
+    const starts = [];
+    const lines = text.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const l = lines[i].trim();
+      if (/^(AUTON[ÓO]MICA|INSULAR\b)/i.test(l)) {
+        starts.push(i);
+      }
+    }
+    // Si no encontramos cabeceras, fallback: divide por apariciones de la etiqueta LOCAL
+    if (starts.length === 0) {
+      for (let i = 0; i < lines.length; i++) {
+        if (/^LOCAL$/i.test(lines[i].trim())) starts.push(i > 2 ? i - 2 : i);
+      }
+    }
+    if (starts.length === 0) return [text];
+
+    const blocks = [];
+    for (let s = 0; s < starts.length; s++) {
+      const from = starts[s];
+      const to = s + 1 < starts.length ? starts[s + 1] : lines.length;
+      const chunk = lines.slice(from, to).join('\n').trim();
+      if (chunk) blocks.push(chunk);
+    }
+    return blocks;
+  }
+
+  // ---------- Parser (tu lógica, con mínimos retoques) ----------
   function parseFixture(raw) {
     const text = (raw || '').replace(/\r/g, '\n');
     const lines = text.split(/\n+/).map(l => l.trim()).filter(Boolean);
@@ -174,7 +218,7 @@
     const LABELS = ['LOCAL', 'VISITANTE', 'FECHA', 'HORA', 'INSTALACIÓN', 'INSTALACION', 'ROL', 'ACTA'];
     const isLabel = (s) => LABELS.includes((s || '').toUpperCase());
 
-    // 1) Bloque de etiquetas seguido de valores
+    // localizar bloque etiquetas
     const labelBlockIdxs = lines
       .map((l, i) => ({ l, i }))
       .filter(x => isLabel(x.l))
@@ -216,8 +260,8 @@
       }
     }
 
-    // 2) Fallback etiqueta → valor inmediato
-    const isLabelStrict = (s) => ['LOCAL', 'VISITANTE', 'FECHA', 'HORA', 'INSTALACIÓN', 'INSTALACION', 'ROL', 'ACTA'].includes((s || '').toUpperCase());
+    // Fallback etiqueta→valor
+    const isLabelStrict = (s) => LABELS.includes((s || '').toUpperCase());
     const findAfter = (label) => {
       const idx = lines.findIndex(l => l.toUpperCase() === label.toUpperCase());
       if (idx === -1) return null;
@@ -303,7 +347,16 @@
     return null;
   }
 
+  function escapeHtml(s) {
+    return String(s)
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;');
+  }
+
   // Init
+  ['input','change'].forEach(evt => $raw.addEventListener(evt, saveState));
+  window.addEventListener('beforeunload', saveState);
   restoreState();
-  autoWirePersistence();
 })();
