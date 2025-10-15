@@ -162,16 +162,16 @@
   }
 
   if ($createAll) {
-    $createAll.addEventListener('click', () => {
-      const cards = Array.from($cards.querySelectorAll('.card'));
-      if (!cards.length) return;
+ $createAll?.addEventListener('click', () => {
+  const cards = Array.from($cards.querySelectorAll('.card'));
+  if (!cards.length) return;
 
-      const payloads = cards.map(readCard);
-      const invalid = payloads.findIndex(p => !validate(p));
-      if (invalid !== -1) {
-        alert(`Revisa la tarjeta ${invalid + 1}: título, fecha (dd/mm/aaaa) y hora (hh:mm).`);
-        return;
-      }
+  const payloads = cards.map(readCard);
+  const invalidIdx = payloads.findIndex(p => !validate(p));
+  if (invalidIdx !== -1) {
+    alert(`Revisa la tarjeta ${invalidIdx + 1}: título, fecha (dd/mm/aaaa) y hora (hh:mm).`);
+    return;
+  }
       payloads.forEach(openCalendarTab);
     });
   }
@@ -359,4 +359,7 @@
   ['input','change'].forEach(evt => $raw.addEventListener(evt, saveState));
   window.addEventListener('beforeunload', saveState);
   restoreState();
+  
+
+ 
 })();
