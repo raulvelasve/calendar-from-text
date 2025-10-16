@@ -41,7 +41,7 @@ body {
 /* Imagen/logo responsive */
 img[alt="logo"] {
   display: inline-block;
-  width: 40px;
+  width: 45px;
   height: 40px;
   vertical-align: middle;
 }
