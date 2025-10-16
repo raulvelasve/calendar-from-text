@@ -1,87 +1,158 @@
-* {
-    box-sizing: border-box;
+/* Reset básico */
+* { box-sizing: border-box; }
+
+:root{
+  --space-1: 6px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --radius: 8px;
+  --border: 1px solid #ddd;
+  --text: #222;
+  --muted: #666;
+  --primary: #1a73e8;
+  --bg: #fff;
+}
+
+/* @media (prefers-color-scheme: dark) {
+  :root{
+    --text: #eee;
+    --muted: #aaa;
+    --primary: #8ab4f8;
+    --bg: #0b0f19;
+    --border: 1px solid #2a2f3a;
+  }
+} */
+
+html, body {
+  height: 100%;
 }
 
 body {
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    margin: 0;
-    padding: 12px;
-    width: 360px;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  margin: 0;
+  padding: var(--space-3);
+  /* CLAVE: quitar ancho fijo y permitir crecer con el panel */
+  width: auto;
+  max-width: 100%;
+  color: var(--text);
+  background: var(--bg);
 }
 
-header {
-    margin-bottom: 8px;
+/* Imagen/logo responsive */
+img[alt="logo"] {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  vertical-align: middle;
 }
 
+/* Tipografía fluida */
 h1 {
-    font-size: 16px;
-    margin: 0 0 4px;
+  font-size: clamp(16px, 2.2vw, 20px);
+  margin: 0 0 var(--space-2);
 }
+header { margin-bottom: var(--space-2); }
 
 textarea#raw {
-    width: 100%;
-    height: 160px;
-    resize: vertical;
+  width: 100%;
+  height: 160px;
+  resize: vertical;
+  padding: 8px;
+  border: var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--bg);
 }
 
+/* Botones */
 .buttons {
-    display: flex;
-    gap: 8px;
-    margin: 8px 0;
+  display: flex;
+  flex-wrap: wrap;            /* evita desbordes en estrecho */
+  gap: var(--space-2);
+  margin: var(--space-2) 0;
 }
-
 button {
-    padding: 8px 12px;
-    border: none;
-    border-radius: 8px;
-    background: #1a73e8;
-    color: white;
-    cursor: pointer;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+}
+button:hover { filter: brightness(0.95); }
+.hidden { display: none; }
+
+/* Contenedor de tarjetas (opcional por si hay muchas) */
+.cards {
+  display: grid;
+  gap: 12px;
 }
 
-button:hover {
-    filter: brightness(0.95);
-}
-
-.hidden {
-    display: none;
-}
-
-#preview {
-    border-top: 1px solid #eee;
-    padding-top: 8px;
-}
-
+/* Grid de campos */
 .grid {
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    gap: 6px 8px;
-    align-items: center;
+  display: grid;
+  /* CLAVE: la segunda columna (inputs) se expande */
+  grid-template-columns: minmax(120px, 180px) 1fr;
+  gap: var(--space-1) var(--space-2);
+  align-items: center;
 }
 
+/* Campos */
 .grid input,
 .grid textarea {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  border: var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--bg);
 }
+.grid textarea { min-height: 64px; }
 
-.grid textarea {
-    min-height: 64px;
-}
-
+/* Etiquetas */
 label {
-    color: #444;
-    font-size: 12px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
+/* Tarjeta (si quieres marco visual) */
+.card {
+  border: var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+/* Vista previa (si la usas con id #preview) */
+#preview {
+  border-top: 1px solid rgba(125,125,125,.15);
+  padding-top: var(--space-2);
+}
+
+/* Footer */
 footer {
-    margin-top: 6px;
-    color: #666;
-    font-size: 12px;
+  margin-top: var(--space-1);
+  color: var(--muted);
+  font-size: 12px;
 }
 
-.logo {
-    background-image: url("icons/images.png");
+/* Responsive: en pantallas estrechas, 1 columna (etiqueta encima del input) */
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .grid label {
+    margin-top: var(--space-2);
+  }
+  .grid label:first-child {
+    margin-top: 0;
+  }
+}
+
+/* Responsive: en pantallas anchas, más aire y etiquetas alineadas a la derecha */
+@media (min-width: 700px) {
+  body { padding: 16px; }
+  .grid {
+    grid-template-columns: minmax(140px, 220px) 1fr; /* inputs aún más anchos */
+  }
+  .grid label { text-align: right; padding-right: 4px; }
 }
