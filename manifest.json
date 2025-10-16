@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "Arbitro Calendar FBVIB",
     "version": "1.0.0",
-    "description": "Pega un parte/acta y crea un evento en Google Calendar con título, fecha, hora y ubicación.",
+    "description": "Pega uno o varios partidos y genera automáticamente los eventos correspondientes en Google Calendar, incluyendo título, fecha, hora y ubicación.",
     "icons": {
         "128": "icons/images.png"
     },
@@ -17,6 +17,7 @@
     "background": {
         "service_worker": "background.js"
     },
-      "side_panel": { "default_path": "sidepanel.html" }
-
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    }
 }
