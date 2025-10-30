@@ -131,17 +131,20 @@
       return;
     }
 
-    const blocks = splitIntoBlocks(raw);          // NUEVO: divide en partidos
+    const blocks = splitIntoBlocks(raw);
     const parsedList = blocks
       .map(b => parseFixture(b))
       .filter(Boolean);
+
+    // ORDENAR por fecha/hora ascendente antes de crear las tarjetas
+    parsedList.sort((a, b) => toTimestamp(a.date, a.time) - toTimestamp(b.date, b.time));
 
     if (!parsedList.length) {
       alert('No se reconoció ningún partido. Revisa el formato.');
       return;
     }
 
-    // limpia tarjetas anteriores y pinta nuevas
+    // limpia y pinta ya ordenado
     $cards.innerHTML = '';
     parsedList.forEach((p, idx) => {
       const card = createCard(idx, { ...p, duration: 120 });
@@ -150,6 +153,7 @@
 
     $previews.classList.remove('hidden');
     saveState();
+
   });
 
   if ($clear) {
@@ -162,16 +166,16 @@
   }
 
   if ($createAll) {
- $createAll?.addEventListener('click', () => {
-  const cards = Array.from($cards.querySelectorAll('.card'));
-  if (!cards.length) return;
+    $createAll?.addEventListener('click', () => {
+      const cards = Array.from($cards.querySelectorAll('.card'));
+      if (!cards.length) return;
 
-  const payloads = cards.map(readCard);
-  const invalidIdx = payloads.findIndex(p => !validate(p));
-  if (invalidIdx !== -1) {
-    alert(`Revisa la tarjeta ${invalidIdx + 1}: título, fecha (dd/mm/aaaa) y hora (hh:mm).`);
-    return;
-  }
+      const payloads = cards.map(readCard);
+      const invalidIdx = payloads.findIndex(p => !validate(p));
+      if (invalidIdx !== -1) {
+        alert(`Revisa la tarjeta ${invalidIdx + 1}: título, fecha (dd/mm/aaaa) y hora (hh:mm).`);
+        return;
+      }
       payloads.forEach(openCalendarTab);
     });
   }
@@ -302,6 +306,17 @@
     if (!date || !time || !location || !title) return null;
     return { title, date, time, location, details };
   }
+  function toTimestamp(dStr, tStr) {
+    // dStr: 'dd/mm/aaaa' | tStr: 'hh:mm'
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(dStr || '')) return Number.POSITIVE_INFINITY;
+    const [dd, mm, yyyy] = dStr.split('/').map(Number);
+    let hh = 0, mi = 0;
+    if (/^\d{1,2}:\d{2}$/.test(tStr || '')) {
+      [hh, mi] = tStr.split(':').map(Number);
+    }
+    return new Date(yyyy, (mm - 1), dd, hh, mi, 0, 0).getTime();
+  }
+
 
   function matchDate(s) {
     const m = s.match(/\b(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})\b/);
@@ -356,10 +371,10 @@
   }
 
   // Init
-  ['input','change'].forEach(evt => $raw.addEventListener(evt, saveState));
+  ['input', 'change'].forEach(evt => $raw.addEventListener(evt, saveState));
   window.addEventListener('beforeunload', saveState);
   restoreState();
-  
 
- 
+
+
 })();
