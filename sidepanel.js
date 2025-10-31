@@ -8,6 +8,8 @@
   const $previews = el('previews');
   const $cards = el('cards');
   const $createAll = el('createAll');
+  const $matchCount = el('matchCount');
+
 
   // ---------- Persistencia simple (solo guardamos el bloque pegado) ----------
   function saveState() {
@@ -33,6 +35,23 @@
     if ($clear) {
       $clear.classList.toggle('hidden', !has);
       $clear.disabled = !has;
+    }
+  }
+  function updateMatchCount(n) {
+    if (!$matchCount) return;
+    if (!n || n <= 0) {
+      $matchCount.textContent = '';
+      $matchCount.classList.add('hidden');
+      // Restablece texto del botón
+      if ($createAll) $createAll.textContent = 'Crear todos en Calendar';
+      return;
+    }
+    const plural = n === 1 ? '' : 's';
+    $matchCount.textContent = `${n} partido${plural} reconocido${plural}`;
+    $matchCount.classList.remove('hidden');
+
+    if ($createAll) {
+      $createAll.textContent = `Crear todos en Calendar (${n})`;
     }
   }
 
@@ -152,6 +171,8 @@
     });
 
     $previews.classList.remove('hidden');
+    updateMatchCount(parsedList.length);
+
     saveState();
 
   });
