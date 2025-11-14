@@ -1,7 +1,9 @@
 /* Reset básico */
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-:root{
+:root {
   --space-1: 6px;
   --space-2: 8px;
   --space-3: 12px;
@@ -13,17 +15,58 @@
   --bg: #fff;
 }
 
-/* @media (prefers-color-scheme: dark) {
-  :root{
-    --text: #eee;
-    --muted: #aaa;
-    --primary: #8ab4f8;
-    --bg: #0b0f19;
-    --border: 1px solid #2a2f3a;
-  }
-} */
+/* Tema oscuro activado por atributo en <html> o <body> */
+:root[data-theme="dark"] {
+  --text: #eaeaea;
+  --muted: #a9a9a9;
+  --primary: #ABC9FA;
+  --bg: #1B1B1B;
+  --border: 1px solid #2a2f3a;
+}
+:root[data-theme="dark"] button {
+  color: #062e6f;      /* azul fuerte */
+  /* opcional: si quieres cambiar también el fondo en oscuro: */
+  /* background: #ffffff; */
+}
 
-html, body {
+/* Animación suave al cambiar */
+html,
+body,
+.card,
+textarea#raw,
+.grid input,
+.grid textarea {
+  transition: background-color .2s ease, color .2s ease, border-color .2s ease, filter .2s ease;
+}
+
+/* Header en fila para alojar el toggle */
+.header-bar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+header {
+  margin-bottom: var(--space-2);
+}
+
+
+/* Botón tipo "ghost" para el toggle */
+button.ghost {
+  background: transparent;
+  color: var(--text);
+  border: var(--border);
+  padding: 6px 10px;
+}
+
+button.ghost:hover {
+  filter: brightness(1.15);
+}
+
+
+html,
+body {
   height: 100%;
 }
 
@@ -51,7 +94,10 @@ h1 {
   font-size: clamp(16px, 2.2vw, 20px);
   margin: 0 0 var(--space-2);
 }
-header { margin-bottom: var(--space-2); }
+
+header {
+  margin-bottom: var(--space-2);
+}
 
 textarea#raw {
   width: 100%;
@@ -67,10 +113,12 @@ textarea#raw {
 /* Botones */
 .buttons {
   display: flex;
-  flex-wrap: wrap;            /* evita desbordes en estrecho */
+  flex-wrap: wrap;
+  /* evita desbordes en estrecho */
   gap: var(--space-2);
   margin: var(--space-2) 0;
 }
+
 button {
   padding: 8px 12px;
   border: none;
@@ -79,8 +127,14 @@ button {
   color: white;
   cursor: pointer;
 }
-button:hover { filter: brightness(0.95); }
-.hidden { display: none; }
+
+button:hover {
+  filter: brightness(0.95);
+}
+
+.hidden {
+  display: none;
+}
 
 /* Contenedor de tarjetas (opcional por si hay muchas) */
 .cards {
@@ -107,7 +161,10 @@ button:hover { filter: brightness(0.95); }
   color: var(--text);
   background: var(--bg);
 }
-.grid textarea { min-height: 64px; }
+
+.grid textarea {
+  min-height: 64px;
+}
 
 /* Etiquetas */
 label {
@@ -124,7 +181,7 @@ label {
 
 /* Vista previa (si la usas con id #preview) */
 #preview {
-  border-top: 1px solid rgba(125,125,125,.15);
+  border-top: 1px solid rgba(125, 125, 125, .15);
   padding-top: var(--space-2);
 }
 
@@ -140,9 +197,11 @@ footer {
   .grid {
     grid-template-columns: 1fr;
   }
+
   .grid label {
     margin-top: var(--space-2);
   }
+
   .grid label:first-child {
     margin-top: 0;
   }
@@ -150,9 +209,17 @@ footer {
 
 /* Responsive: en pantallas anchas, más aire y etiquetas alineadas a la derecha */
 @media (min-width: 700px) {
-  body { padding: 16px; }
-  .grid {
-    grid-template-columns: minmax(140px, 220px) 1fr; /* inputs aún más anchos */
+  body {
+    padding: 16px;
   }
-  .grid label { text-align: right; padding-right: 4px; }
+
+  .grid {
+    grid-template-columns: minmax(140px, 220px) 1fr;
+    /* inputs aún más anchos */
+  }
+
+  .grid label {
+    text-align: right;
+    padding-right: 4px;
+  }
 }

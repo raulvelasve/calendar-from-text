@@ -10,6 +10,52 @@
   const $createAll = el('createAll');
   const $matchCount = el('matchCount');
 
+  const $themeToggle = el('themeToggle');
+  const THEME_KEY = 'eventFromText_theme';
+
+  function getStoredTheme(cb) {
+    if (chrome?.storage?.local) {
+      chrome.storage.local.get([THEME_KEY], (res) => cb(res[THEME_KEY] || null));
+    } else {
+      cb(localStorage.getItem(THEME_KEY));
+    }
+  }
+  function storeTheme(val) {
+    if (chrome?.storage?.local) {
+      chrome.storage.local.set({ [THEME_KEY]: val });
+    } else {
+      localStorage.setItem(THEME_KEY, val);
+    }
+  }
+  function systemPrefersDark() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function applyTheme(theme) { // 'light' | 'dark'
+    const root = document.documentElement; // <html>
+    root.setAttribute('data-theme', theme);
+    // Icono y aria-pressed del botón
+    if ($themeToggle) {
+      const isDark = theme === 'dark';
+      $themeToggle.textContent = isDark ? '☀️' : '🌙';
+      $themeToggle.setAttribute('aria-pressed', String(isDark));
+      $themeToggle.title = isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+    }
+  }
+  function initTheme() {
+    getStoredTheme((stored) => {
+      const theme = stored || (systemPrefersDark() ? 'dark' : 'light');
+      applyTheme(theme);
+    });
+  }
+  if ($themeToggle) {
+    $themeToggle.addEventListener('click', () => {
+      const root = document.documentElement;
+      const current = root.getAttribute('data-theme') || (systemPrefersDark() ? 'dark' : 'light');
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      storeTheme(next);
+    });
+  }
 
   // ---------- Persistencia simple (solo guardamos el bloque pegado) ----------
   function saveState() {
@@ -25,6 +71,8 @@
       toggleClearButton();
     });
   }
+
+
 
   function hasAnyContent() {
     return ($raw.value || '').trim().length > 0 || ($cards?.children?.length || 0) > 0;
@@ -395,7 +443,7 @@
   ['input', 'change'].forEach(evt => $raw.addEventListener(evt, saveState));
   window.addEventListener('beforeunload', saveState);
   restoreState();
-
+initTheme();
 
 
 })();
