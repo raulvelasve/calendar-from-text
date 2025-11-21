@@ -260,7 +260,7 @@
     const lines = text.split('\n');
     for (let i = 0; i < lines.length; i++) {
       const l = lines[i].trim();
-      if (/^(AUTON[ÓO]MICA|INSULAR\b)/i.test(l)) {
+      if (/^(AUTON[ÓO]MICA|INSULAR|SUPERLIGA)/i.test(l)) {
         starts.push(i);
       }
     }
@@ -443,7 +443,7 @@
   ['input', 'change'].forEach(evt => $raw.addEventListener(evt, saveState));
   window.addEventListener('beforeunload', saveState);
   restoreState();
-initTheme();
+  initTheme();
 
 
 })();
