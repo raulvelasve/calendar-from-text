@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Arbitro Calendar FBVIB",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "description": "Pega uno o varios partidos y crea los eventos correspondientes en Google Calendar, incluyendo título, fecha, hora y ubicación.",
     "icons": {
         "128": "icons/images.png"
