@@ -253,15 +253,17 @@
   function splitIntoBlocks(raw) {
     // normaliza saltos
     const text = raw.replace(/\r/g, '\n').trim();
-
+    const lines = text.split('\n');
     // estrategia principal: cada bloque comienza con una línea de cabecera tipo
     // "AUTONÓMICA", "INSULAR …", etc. Capturamos desde ese inicio hasta el siguiente
     const starts = [];
-    const lines = text.split('\n');
     for (let i = 0; i < lines.length; i++) {
       const l = lines[i].trim();
-      if (/^(AUTON[ÓO]MICA|INSULAR|SUPERLIGA)/i.test(l)) {
-        starts.push(i);
+      if (/^(AUTON[ÓO]MICA|INSULAR|SUPERLIGA|PRIMERA)/i.test(l)) {
+        // NUEVO: solo consideramos inicio si está en mayúsculas
+        if (l === l.toUpperCase()) {
+          starts.push(i);
+        }
       }
     }
     // Si no encontramos cabeceras, fallback: divide por apariciones de la etiqueta LOCAL
